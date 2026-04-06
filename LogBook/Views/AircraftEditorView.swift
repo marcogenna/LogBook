@@ -23,32 +23,32 @@ struct AircraftEditorView: View {
         NavigationStack {
             Form {
 
-                // MARK: - Identificazione
-                Section("Identificazione") {
-                    FieldRow("Marche", text: $draft.registration, placeholder: "es. SX-NEF", uppercase: true)
-                    FieldRow("Codice ICAO", text: $draft.icaoCode, placeholder: "es. A320", uppercase: true)
+                // MARK: - Identification
+                Section("Identification") {
+                    FieldRow("Registration", text: $draft.registration, placeholder: "e.g. SX-NEF", uppercase: true)
+                    FieldRow("ICAO Code", text: $draft.icaoCode, placeholder: "e.g. A320", uppercase: true)
                         .onChange(of: draft.icaoCode) { _, newVal in
                             autoFillFromICAO(newVal)
                         }
                 }
 
-                // MARK: - Costruttore e Modello
-                Section("Costruttore e Modello") {
-                    FieldRow("Costruttore", text: $draft.manufacturer, placeholder: "es. Airbus")
-                    FieldRow("Modello", text: $draft.model, placeholder: "es. A320")
+                // MARK: - Manufacturer & Model
+                Section("Manufacturer & Model") {
+                    FieldRow("Manufacturer", text: $draft.manufacturer, placeholder: "e.g. Airbus")
+                    FieldRow("Model", text: $draft.model, placeholder: "e.g. A320")
                         .onChange(of: draft.model) { _, newVal in
                             autoFillFromModel(newVal)
                         }
-                    FieldRow("Variante / Serie", text: $draft.variant, placeholder: "es. 271N (identifica motorizzazione)")
+                    FieldRow("Variant / Series", text: $draft.variant, placeholder: "e.g. 271N (identifies engine variant)")
                 }
 
-                // MARK: - Dettagli Tecnici
-                Section("Dettagli Tecnici") {
-                    FieldRow("Serial Number (MSN)", text: $draft.serialNumber, placeholder: "es. 7654")
-                    FieldRow("Tipo Motore", text: $draft.engineType, placeholder: "es. PW1127G-JM")
+                // MARK: - Technical Details
+                Section("Technical Details") {
+                    FieldRow("Serial Number (MSN)", text: $draft.serialNumber, placeholder: "e.g. 7654")
+                    FieldRow("Engine Type", text: $draft.engineType, placeholder: "e.g. PW1127G-JM")
 
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Numero Motori").font(.caption).foregroundStyle(.secondary)
+                        Text("Engine Count").font(.caption).foregroundStyle(.secondary)
                         Picker("", selection: $draft.engineCount) {
                             Text("—").tag(0)
                             Text("1").tag(1)
@@ -60,37 +60,37 @@ struct AircraftEditorView: View {
                         .labelsHidden()
                     }
 
-                    FieldRow("MTOW", text: $draft.mtow, placeholder: "es. 77,000 kg")
-                    FieldRow("Primo Volo", text: $draft.firstFlight, placeholder: "es. 2018-03-15")
+                    FieldRow("MTOW", text: $draft.mtow, placeholder: "e.g. 77,000 kg")
+                    FieldRow("First Flight", text: $draft.firstFlight, placeholder: "e.g. 2018-03-15")
                 }
 
-                // MARK: - Classificazione
-                Section("Classificazione EASA") {
-                    Picker("Categoria", selection: classificationBinding) {
-                        Text("Monomotore – Monopilota (SE)").tag(Classification.se)
-                        Text("Multimotore – Monopilota (ME)").tag(Classification.me)
-                        Text("Multipilota (MP)").tag(Classification.mp)
+                // MARK: - Classification
+                Section("EASA Classification") {
+                    Picker("Category", selection: classificationBinding) {
+                        Text("Single Engine – Single Pilot (SE)").tag(Classification.se)
+                        Text("Multi Engine – Single Pilot (ME)").tag(Classification.me)
+                        Text("Multi Pilot (MP)").tag(Classification.mp)
                     }
                     .pickerStyle(.radioGroup)
                 }
 
-                // MARK: - Operatore
-                Section("Operatore") {
-                    FieldRow("Compagnia", text: $draft.company, placeholder: "es. Aegean Airlines")
+                // MARK: - Operator
+                Section("Operator") {
+                    FieldRow("Operator", text: $draft.company, placeholder: "e.g. Aegean Airlines")
                 }
 
-                // MARK: - Note
-                Section("Note") {
+                // MARK: - Notes
+                Section("Notes") {
                     TextEditor(text: $draft.notes)
                         .frame(minHeight: 60, maxHeight: 120)
                         .font(.body)
                 }
             }
             .formStyle(.grouped)
-            .navigationTitle(isNew ? "Nuovo Aeromobile" : "Modifica Aeromobile")
+            .navigationTitle(isNew ? "New Aircraft" : "Edit Aircraft")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Annulla") { dismiss() }
+                    Button("Cancel") { dismiss() }
                 }
 
                 ToolbarItem(placement: .automatic) {
@@ -102,15 +102,15 @@ struct AircraftEditorView: View {
                                 .scaleEffect(0.7)
                                 .frame(width: 16, height: 16)
                         } else {
-                            Label("Cerca su Internet", systemImage: "magnifyingglass.circle")
+                            Label("Search Online", systemImage: "magnifyingglass.circle")
                         }
                     }
                     .disabled(draft.registration.trimmingCharacters(in: .whitespaces).count < 3 || isLooking)
-                    .help("Cerca dati aeromobile per marche su internet")
+                    .help("Look up aircraft data by registration online")
                 }
 
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Salva") {
+                    Button("Save") {
                         onSave(draft)
                         dismiss()
                     }
@@ -119,10 +119,10 @@ struct AircraftEditorView: View {
             }
         }
         .frame(minWidth: 520, minHeight: 620)
-        .alert("Ricerca Aeromobile", isPresented: $showLookupAlert) {
+        .alert("Aircraft Lookup", isPresented: $showLookupAlert) {
             Button("OK") {}
         } message: {
-            Text(lookupError ?? "Nessun risultato trovato per \(draft.registration)")
+            Text(lookupError ?? "No results found for \(draft.registration)")
         }
     }
 
@@ -142,19 +142,19 @@ struct AircraftEditorView: View {
         let info = await lookup.fullLookup(registration: draft.registration)
 
         if let info = info {
-            // Dati dall'API sono autorevoli: sovrascrivono sempre ICAO, manufacturer, model, variant
+            // API data is authoritative: always overwrite ICAO, manufacturer, model, variant
             if !info.icaoCode.isEmpty   { draft.icaoCode = info.icaoCode }
             if !info.manufacturer.isEmpty { draft.manufacturer = info.manufacturer }
             if !info.model.isEmpty      { draft.model = info.model }
             if !info.variant.isEmpty    { draft.variant = info.variant }
             if !info.company.isEmpty    { draft.company = info.company }
 
-            // Dati tecnici: popola solo se vuoti
+            // Technical data: fill only if empty
             if draft.engineType.isEmpty && !info.engineType.isEmpty { draft.engineType = info.engineType }
             if draft.engineCount == 0 { draft.engineCount = info.engineCount }
             if draft.mtow.isEmpty && !info.mtow.isEmpty { draft.mtow = info.mtow }
 
-            // Classifica SE/ME/MP: sovrascrive
+            // SE/ME/MP classification: overwrite
             draft.isSingleEngine = info.isSingleEngine
             draft.isMultiEngine = info.isMultiEngine
             draft.isMultiPilot = info.isMultiPilot
@@ -164,9 +164,9 @@ struct AircraftEditorView: View {
         }
     }
 
-    // MARK: - Auto-fill from ICAO code (locale)
+    // MARK: - Auto-fill from ICAO code (local)
 
-    /// Chiamata quando cambia il campo "Codice ICAO" — es. l'utente scrive "A320" o "A20N"
+    /// Called when the ICAO Code field changes — e.g. user types "A320" or "A20N"
     private func autoFillFromICAO(_ code: String) {
         let trimmed = code.trimmingCharacters(in: .whitespaces).uppercased()
         guard trimmed.count >= 3 else { return }
@@ -177,26 +177,26 @@ struct AircraftEditorView: View {
         }
     }
 
-    /// Chiamata quando cambia il campo "Modello" — accetta input libero:
+    /// Called when the Model field changes — accepts free-form input:
     /// "A320", "Airbus A320", "Airbus A320-271N", "737-800", "Boeing 737", etc.
     private func autoFillFromModel(_ input: String) {
         let trimmed = input.trimmingCharacters(in: .whitespaces)
         guard trimmed.count >= 3 else { return }
 
-        // Parsa l'input libero per estrarre manufacturer, codice ICAO, variant
+        // Parse free-form input to extract manufacturer, ICAO code, variant
         let parsed = parseModelInput(trimmed)
 
-        // Se ha trovato un manufacturer nell'input, usalo
+        // If a manufacturer was found in the input, use it
         if let mfr = parsed.manufacturer, draft.manufacturer.isEmpty {
             draft.manufacturer = mfr
         }
 
-        // Se ha trovato una variant nell'input, usala
+        // If a variant was found in the input, use it
         if let v = parsed.variant, draft.variant.isEmpty {
             draft.variant = v
         }
 
-        // Cerca nel database ICAO
+        // Look up in ICAO database
         Task {
             if let code = parsed.icaoCode,
                let icao = await lookup.lookupByICAOCode(code) {
@@ -206,7 +206,7 @@ struct AircraftEditorView: View {
         }
     }
 
-    /// Applica i dati dal database ICAO locale ai campi vuoti
+    /// Apply data from local ICAO database to empty fields
     private func applyICAOInfo(_ icao: AircraftLookupService.ICAOType) {
         if draft.manufacturer.isEmpty { draft.manufacturer = icao.manufacturer }
         if draft.engineCount == 0 { draft.engineCount = icao.engineCount }
@@ -222,7 +222,7 @@ struct AircraftEditorView: View {
 
     // MARK: - Parse model input
 
-    /// Mapping nomi costruttori → prefisso ICAO dei modelli
+    /// Mapping manufacturer names → ICAO model prefix
     private static let knownManufacturers: [(name: String, prefix: String)] = [
         ("AIRBUS", "A"),
         ("BOEING", "B"),
@@ -252,7 +252,7 @@ struct AircraftEditorView: View {
         let upper = input.uppercased()
         var result = ParsedModelInput()
 
-        // 1. Cerca manufacturer noto all'inizio dell'input
+        // 1. Find known manufacturer at the start of input
         //    "Airbus A320-271N" → manufacturer="Airbus", rest="A320-271N"
         var rest = upper
         for (name, _) in Self.knownManufacturers {
@@ -263,7 +263,7 @@ struct AircraftEditorView: View {
             }
         }
 
-        // 2. Separa modello e variant dal resto
+        // 2. Separate model and variant from the rest
         //    "A320-271N" → base="A320", variant="271N"
         //    "A320" → base="A320", variant=nil
         //    "737-800" → base="737", variant="800"
@@ -271,18 +271,18 @@ struct AircraftEditorView: View {
         let parts = normalized.split(separator: " ").map(String.init)
 
         if let base = parts.first {
-            // Cerca direttamente nel database ICAO
+            // Search directly in ICAO database
             result.icaoCode = base
 
-            // Variant è tutto dopo il primo token
+            // Variant is everything after the first token
             if parts.count >= 2 {
                 result.variant = parts.dropFirst().joined(separator: "")
             }
 
-            // Se il codice base non è un codice ICAO standard, prova mapping comuni
+            // If the base code is not a standard ICAO code, try common mappings
             // "320" → "A320", "737" → "B737"
             if base.allSatisfy(\.isNumber) {
-                // Solo numeri: prova ad aggiungere prefisso dal manufacturer
+                // Numbers only: try adding prefix from manufacturer
                 if let mfr = result.manufacturer?.uppercased(),
                    let entry = Self.knownManufacturers.first(where: { $0.name == mfr }),
                    !entry.prefix.isEmpty {

@@ -28,6 +28,24 @@ struct LogbookView: View {
             colsTime
             colsConditionsFunction
         }
+        .contextMenu(forSelectionType: Flight.ID.self) { ids in
+            if let id = ids.first,
+               let flight = store.flights.first(where: { $0.id == id }) {
+                Button("Edit") {
+                    editingFlight = flight
+                }
+                Divider()
+                Button("Delete", role: .destructive) {
+                    selection = ids
+                    confirmDelete = true
+                }
+            }
+        } primaryAction: { ids in
+            if let id = ids.first,
+               let flight = store.flights.first(where: { $0.id == id }) {
+                editingFlight = flight
+            }
+        }
         .onChange(of: sortOrder) { _, newOrder in
             store.flights.sort(using: newOrder)
         }
@@ -40,12 +58,12 @@ struct LogbookView: View {
                 Button {
                     Task { await store.fetchFlights() }
                 } label: {
-                    Label("Aggiorna", systemImage: "arrow.clockwise")
+                    Label("Refresh", systemImage: "arrow.clockwise")
                 }
                 Button {
                     showAddFlight = true
                 } label: {
-                    Label("Aggiungi Volo", systemImage: "plus")
+                    Label("Add Flight", systemImage: "plus")
                 }
                 .keyboardShortcut("n", modifiers: .command)
             }
@@ -54,19 +72,19 @@ struct LogbookView: View {
                     Button(role: .destructive) {
                         confirmDelete = true
                     } label: {
-                        Label("Elimina", systemImage: "trash")
+                        Label("Delete", systemImage: "trash")
                     }
                 }
             }
         }
-        .searchable(text: $searchText, prompt: "Cerca voli…")
+        .searchable(text: $searchText, prompt: "Search flights…")
         .onDeleteCommand { if !selection.isEmpty { confirmDelete = true } }
         .confirmationDialog(
-            "Eliminare \(selection.count) volo/i?",
+            "Delete \(selection.count) flight(s)?",
             isPresented: $confirmDelete,
             titleVisibility: .visible
         ) {
-            Button("Elimina", role: .destructive) { deleteSelected() }
+            Button("Delete", role: .destructive) { deleteSelected() }
         }
         .sheet(isPresented: $showAddFlight) {
             FlightEditorView(flight: Flight()) { saved in
@@ -78,55 +96,49 @@ struct LogbookView: View {
                 Task { await store.save(saved) }
             }
         }
-        .onTapGesture(count: 2) {
-            if let id = selection.first,
-               let flight = store.flights.first(where: { $0.id == id }) {
-                editingFlight = flight
-            }
-        }
         .overlay {
             if store.flights.isEmpty && !store.isLoading {
                 ContentUnavailableView(
-                    "Nessun volo registrato",
+                    "No flights recorded",
                     systemImage: "airplane",
-                    description: Text("Premi ⌘N per aggiungere il primo volo")
+                    description: Text("Press ⌘N to add your first flight")
                 )
             }
         }
     }
 
-    // MARK: - Column Groups (spezzati per il type-checker)
+    // MARK: - Column Groups (split for the type-checker)
 
     @TableColumnBuilder<Flight, KeyPathComparator<Flight>>
     private var colsRouteAircraft: some TableColumnContent<Flight, KeyPathComparator<Flight>> {
-        TableColumn("Data", value: \Flight.date) { flight in
+        TableColumn("Date", value: \Flight.date) { flight in
             Text(flight.date, style: .date)
                 .font(.system(.body, design: .monospaced))
         }
         .width(min: 90, ideal: 100)
 
-        TableColumn("Rotta") { flight in
+        TableColumn("Route") { flight in
             Text(flight.route)
                 .font(.system(.body, design: .monospaced))
         }
         .width(min: 110, ideal: 130)
 
-        TableColumn("Tipo", value: \Flight.aircraftType)
+        TableColumn("Type", value: \Flight.aircraftType)
             .width(min: 60, ideal: 70)
 
-        TableColumn("Marche", value: \Flight.aircraftRegistration)
+        TableColumn("Reg.", value: \Flight.aircraftRegistration)
             .width(min: 70, ideal: 80)
 
-        TableColumn("Comandante", value: \Flight.picName)
+        TableColumn("PIC", value: \Flight.picName)
             .width(min: 80, ideal: 100)
 
-        TableColumn("Att. G") { flight in
+        TableColumn("Day Ldg") { flight in
             Text(flight.dayLandings > 0 ? "\(flight.dayLandings)" : "—")
                 .frame(maxWidth: .infinity, alignment: .center)
         }
         .width(min: 40, ideal: 45)
 
-        TableColumn("Att. N") { flight in
+        TableColumn("Ngt Ldg") { flight in
             Text(flight.nightLandings > 0 ? "\(flight.nightLandings)" : "—")
                 .frame(maxWidth: .infinity, alignment: .center)
         }
@@ -150,7 +162,7 @@ struct LogbookView: View {
         }
         .width(min: 55, ideal: 60)
 
-        TableColumn("Totale", value: \Flight.totalFlightTime) { flight in
+        TableColumn("Total", value: \Flight.totalFlightTime) { flight in
             TimeCell(hours: flight.totalFlightTime, bold: true)
         }
         .width(min: 55, ideal: 65)
@@ -158,7 +170,7 @@ struct LogbookView: View {
 
     @TableColumnBuilder<Flight, KeyPathComparator<Flight>>
     private var colsConditionsFunction: some TableColumnContent<Flight, KeyPathComparator<Flight>> {
-        TableColumn("Notte") { flight in
+        TableColumn("Night") { flight in
             TimeCell(hours: flight.nightTime)
         }
         .width(min: 55, ideal: 60)
@@ -178,7 +190,7 @@ struct LogbookView: View {
         }
         .width(min: 55, ideal: 60)
 
-        TableColumn("Duale") { flight in
+        TableColumn("Dual") { flight in
             TimeCell(hours: flight.dualTime)
         }
         .width(min: 55, ideal: 60)
@@ -188,7 +200,7 @@ struct LogbookView: View {
         }
         .width(min: 55, ideal: 60)
 
-        TableColumn("Note", value: \Flight.remarks)
+        TableColumn("Remarks", value: \Flight.remarks)
             .width(min: 100)
     }
 

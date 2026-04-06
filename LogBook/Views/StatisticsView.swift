@@ -21,11 +21,11 @@ struct StatisticsView: View {
 
                 // Year picker
                 HStack {
-                    Text("Statistiche")
+                    Text("Statistics")
                         .font(.largeTitle.bold())
                     Spacer()
-                    Picker("Anno", selection: $selectedYear) {
-                        Text("Tutti").tag(nil as Int?)
+                    Picker("Year", selection: $selectedYear) {
+                        Text("All").tag(nil as Int?)
                         ForEach(years, id: \.self) { year in
                             Text(String(year)).tag(year as Int?)
                         }
@@ -36,22 +36,22 @@ struct StatisticsView: View {
 
                 // Summary cards
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 4), spacing: 12) {
-                    StatCard(title: "Voli Totali", value: "\(yearTotals.flightCount)", unit: "voli", color: .blue)
-                    StatCard(title: "Ore Totali", value: yearTotals.totalFlightTime.hoursMinutes, unit: "hh:mm", color: .indigo)
-                    StatCard(title: "Atterraggi Diurni", value: "\(yearTotals.dayLandings)", unit: "att.", color: .orange)
-                    StatCard(title: "Atterraggi Notturni", value: "\(yearTotals.nightLandings)", unit: "att.", color: .purple)
+                    StatCard(title: "Total Flights", value: "\(yearTotals.flightCount)", unit: "flights", color: .blue)
+                    StatCard(title: "Total Hours", value: yearTotals.totalFlightTime.hoursMinutes, unit: "hh:mm", color: .indigo)
+                    StatCard(title: "Day Landings", value: "\(yearTotals.dayLandings)", unit: "ldg", color: .orange)
+                    StatCard(title: "Night Landings", value: "\(yearTotals.nightLandings)", unit: "ldg", color: .purple)
                 }
 
                 // Time breakdown
-                GroupBox("Ripartizione Tempi di Volo") {
+                GroupBox("Flight Time Breakdown") {
                     VStack(spacing: 0) {
-                        TimeRow(label: "Monomotore Monopilota (SE)", hours: yearTotals.seSinglePilotTime, color: .cyan)
+                        TimeRow(label: "Single Engine Single Pilot (SE)", hours: yearTotals.seSinglePilotTime, color: .cyan)
                         Divider()
-                        TimeRow(label: "Multimotore Monopilota (ME)", hours: yearTotals.meSinglePilotTime, color: .teal)
+                        TimeRow(label: "Multi Engine Single Pilot (ME)", hours: yearTotals.meSinglePilotTime, color: .teal)
                         Divider()
-                        TimeRow(label: "Multipilota (MP)", hours: yearTotals.multiPilotTime, color: .blue)
+                        TimeRow(label: "Multi Pilot (MP)", hours: yearTotals.multiPilotTime, color: .blue)
                         Divider()
-                        TimeRow(label: "Notte", hours: yearTotals.nightTime, color: .indigo)
+                        TimeRow(label: "Night", hours: yearTotals.nightTime, color: .indigo)
                         Divider()
                         TimeRow(label: "IFR", hours: yearTotals.ifrTime, color: .purple)
                     }
@@ -59,24 +59,24 @@ struct StatisticsView: View {
                 }
 
                 // Function time
-                GroupBox("Funzione Pilota") {
+                GroupBox("Pilot Function") {
                     VStack(spacing: 0) {
                         TimeRow(label: "PIC", hours: yearTotals.picTime, color: .green)
                         Divider()
-                        TimeRow(label: "Co-Pilota (SIC)", hours: yearTotals.coPilotTime, color: .yellow)
+                        TimeRow(label: "Co-Pilot (SIC)", hours: yearTotals.coPilotTime, color: .yellow)
                         Divider()
-                        TimeRow(label: "Duale", hours: yearTotals.dualTime, color: .orange)
+                        TimeRow(label: "Dual", hours: yearTotals.dualTime, color: .orange)
                         Divider()
-                        TimeRow(label: "Istruttore", hours: yearTotals.instructorTime, color: .red)
+                        TimeRow(label: "Instructor", hours: yearTotals.instructorTime, color: .red)
                         Divider()
-                        TimeRow(label: "Simulatore (FSTD)", hours: yearTotals.fstdTime, color: .gray)
+                        TimeRow(label: "Simulator (FSTD)", hours: yearTotals.fstdTime, color: .gray)
                     }
                     .padding(.top, 8)
                 }
 
                 // Monthly chart
                 if !store.flights.isEmpty {
-                    GroupBox("Ore per Mese (\(displayYear))") {
+                    GroupBox("Hours by Month (\(displayYear))") {
                         MonthlyChart(year: displayYear, flights: store.flights)
                             .frame(height: 200)
                             .padding(.top, 8)
@@ -85,7 +85,7 @@ struct StatisticsView: View {
 
                 // Aircraft types
                 if !aircraftSummary.isEmpty {
-                    GroupBox("Per Tipo Aeromobile") {
+                    GroupBox("By Aircraft Type") {
                         AircraftBreakdown(data: aircraftSummary)
                             .padding(.top, 8)
                     }
@@ -93,7 +93,7 @@ struct StatisticsView: View {
             }
             .padding(24)
         }
-        .navigationTitle("Statistiche")
+        .navigationTitle("Statistics")
     }
 
     private var aircraftSummary: [(type: String, hours: Double, flights: Int)] {
@@ -178,14 +178,14 @@ private struct MonthlyChart: View {
         return (1...12).map { MonthData(month: $0, hours: monthly[$0] ?? 0) }
     }
 
-    private static let monthNames = ["Gen","Feb","Mar","Apr","Mag","Giu",
-                                      "Lug","Ago","Set","Ott","Nov","Dic"]
+    private static let monthNames = ["Jan","Feb","Mar","Apr","May","Jun",
+                                      "Jul","Aug","Sep","Oct","Nov","Dec"]
 
     var body: some View {
         Chart(data) { item in
             BarMark(
-                x: .value("Mese", Self.monthNames[item.month - 1]),
-                y: .value("Ore", item.hours)
+                x: .value("Month", Self.monthNames[item.month - 1]),
+                y: .value("Hours", item.hours)
             )
             .foregroundStyle(.blue.gradient)
         }
@@ -212,7 +212,7 @@ private struct AircraftBreakdown: View {
                     Text(item.type)
                         .font(.system(.body, design: .monospaced))
                     Spacer()
-                    Text("\(item.flights) voli")
+                    Text("\(item.flights) flights")
                         .foregroundStyle(.secondary)
                         .font(.caption)
                     Text(item.hours.hoursMinutes)

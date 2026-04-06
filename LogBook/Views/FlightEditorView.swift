@@ -22,17 +22,17 @@ struct FlightEditorView: View {
             Form {
 
                 // MARK: 1 – Date & Route
-                Section("Data e Rotta") {
-                    DatePicker("Data", selection: $draft.date, displayedComponents: .date)
+                Section("Date & Route") {
+                    DatePicker("Date", selection: $draft.date, displayedComponents: .date)
 
                     HStack {
                         VStack(alignment: .leading) {
-                            Label("Partenza (ICAO)", systemImage: "airplane.departure")
+                            Label("Departure (ICAO)", systemImage: "airplane.departure")
                                 .font(.caption).foregroundStyle(.secondary)
                             TextField("LIMC", text: $draft.departurePlace)
                                 .textFieldStyle(.squareBorder)
                                 .textCase(.uppercase)
-                            DatePicker("Ora", selection: Binding(
+                            DatePicker("Time", selection: Binding(
                                 get: { draft.departureTime ?? draft.date },
                                 set: { draft.departureTime = $0 }
                             ), displayedComponents: .hourAndMinute)
@@ -45,12 +45,12 @@ struct FlightEditorView: View {
                             .padding(.top, 16)
 
                         VStack(alignment: .leading) {
-                            Label("Arrivo (ICAO)", systemImage: "airplane.arrival")
+                            Label("Arrival (ICAO)", systemImage: "airplane.arrival")
                                 .font(.caption).foregroundStyle(.secondary)
                             TextField("LIRN", text: $draft.arrivalPlace)
                                 .textFieldStyle(.squareBorder)
                                 .textCase(.uppercase)
-                            DatePicker("Ora", selection: Binding(
+                            DatePicker("Time", selection: Binding(
                                 get: { draft.arrivalTime ?? draft.date },
                                 set: { draft.arrivalTime = $0 }
                             ), displayedComponents: .hourAndMinute)
@@ -60,8 +60,8 @@ struct FlightEditorView: View {
                 }
 
                 // MARK: 2 – Aircraft
-                Section("Aeromobile") {
-                    LabeledContent("Marche") {
+                Section("Aircraft") {
+                    LabeledContent("Registration") {
                         VStack(alignment: .trailing, spacing: 2) {
                             TextField("SX-DVQ", text: $draft.aircraftRegistration)
                                 .textCase(.uppercase)
@@ -100,7 +100,7 @@ struct FlightEditorView: View {
                             }
                         }
                     }
-                    LabeledContent("Tipo") {
+                    LabeledContent("Type") {
                         TextField("A320", text: $draft.aircraftType)
                             .textCase(.uppercase)
                             .multilineTextAlignment(.trailing)
@@ -108,49 +108,49 @@ struct FlightEditorView: View {
                 }
 
                 // MARK: 3 – Time (Single/Multi/Total)
-                Section("Tempi di Volo") {
-                    HoursField(label: "Monomotore – Monopilota (SE)", value: $draft.seSinglePilotTime)
-                    HoursField(label: "Multimotore – Monopilota (ME)", value: $draft.meSinglePilotTime)
-                    HoursField(label: "Multipilota (MP)", value: $draft.multiPilotTime)
+                Section("Flight Times") {
+                    HoursField(label: "Single Engine – Single Pilot (SE)", value: $draft.seSinglePilotTime)
+                    HoursField(label: "Multi Engine – Single Pilot (ME)", value: $draft.meSinglePilotTime)
+                    HoursField(label: "Multi Pilot (MP)", value: $draft.multiPilotTime)
                     Divider()
-                    HoursField(label: "Totale Volo", value: $draft.totalFlightTime, bold: true)
+                    HoursField(label: "Total Flight", value: $draft.totalFlightTime, bold: true)
                 }
 
                 // MARK: 4 – PIC Name
-                Section("Comandante") {
-                    LabeledContent("Nome PIC") {
-                        TextField("Mario Rossi", text: $draft.picName)
+                Section("PIC") {
+                    LabeledContent("PIC Name") {
+                        TextField("John Smith", text: $draft.picName)
                             .multilineTextAlignment(.trailing)
                     }
                 }
 
                 // MARK: 5 – Landings
-                Section("Atterraggi") {
-                    Stepper("Diurni: \(draft.dayLandings)", value: $draft.dayLandings, in: 0...99)
-                    Stepper("Notturni: \(draft.nightLandings)", value: $draft.nightLandings, in: 0...99)
+                Section("Landings") {
+                    Stepper("Day: \(draft.dayLandings)", value: $draft.dayLandings, in: 0...99)
+                    Stepper("Night: \(draft.nightLandings)", value: $draft.nightLandings, in: 0...99)
                 }
 
                 // MARK: 6 – Operational Conditions
-                Section("Condizioni Operative") {
-                    HoursField(label: "Ore Notturne", value: $draft.nightTime)
-                    HoursField(label: "Ore IFR", value: $draft.ifrTime)
+                Section("Operational Conditions") {
+                    HoursField(label: "Night Hours", value: $draft.nightTime)
+                    HoursField(label: "IFR Hours", value: $draft.ifrTime)
                 }
 
                 // MARK: 7 – Pilot Function
-                Section("Funzione Pilota") {
+                Section("Pilot Function") {
                     HoursField(label: "PIC", value: $draft.picTime)
-                    HoursField(label: "Co-Pilota (SIC)", value: $draft.coPilotTime)
-                    HoursField(label: "Duale", value: $draft.dualTime)
-                    HoursField(label: "Istruttore", value: $draft.instructorTime)
+                    HoursField(label: "Co-Pilot (SIC)", value: $draft.coPilotTime)
+                    HoursField(label: "Dual", value: $draft.dualTime)
+                    HoursField(label: "Instructor", value: $draft.instructorTime)
                 }
 
                 // MARK: 8 – FSTD/Simulatore
-                Section("Simulatore (FSTD)") {
-                    LabeledContent("Tipo FSTD") {
+                Section("Simulator (FSTD)") {
+                    LabeledContent("FSTD Type") {
                         TextField("FFS B738", text: $draft.fstdType)
                             .multilineTextAlignment(.trailing)
                     }
-                    HoursField(label: "Ore Simulatore", value: $draft.fstdTime)
+                    HoursField(label: "Simulator Hours", value: $draft.fstdTime)
                 }
 
                 // MARK: 9 – Remarks
@@ -162,13 +162,13 @@ struct FlightEditorView: View {
 
             }
             .formStyle(.grouped)
-            .navigationTitle(isNew ? "Nuovo Volo" : "Modifica Volo")
+            .navigationTitle(isNew ? "New Flight" : "Edit Flight")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Annulla") { dismiss() }
+                    Button("Cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Salva") {
+                    Button("Save") {
                         onSave(draft)
                         dismiss()
                     }
@@ -202,7 +202,7 @@ struct FlightEditorView: View {
         draft.aircraftRegistration = ac.registration.uppercased()
         draft.aircraftType = ac.type.uppercased()
 
-        // Auto-classifica tempi SE/ME/MP se total > 0 e nessun tempo specifico impostato
+        // Auto-classify SE/ME/MP times if total > 0 and no specific time set
         if draft.totalFlightTime > 0 &&
            draft.seSinglePilotTime == 0 &&
            draft.meSinglePilotTime == 0 &&

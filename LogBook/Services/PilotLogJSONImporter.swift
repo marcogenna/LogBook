@@ -1,8 +1,8 @@
 import Foundation
 
 // MARK: - PilotLog JSON Importer
-// Importa dal backup JSON di PilotLog (array di record con "table" + "meta").
-// Stesso schema del database SQLite, ma in formato JSON cloud-export.
+// Imports from PilotLog JSON backup (array of records with "table" + "meta").
+// Same schema as the SQLite database, but in JSON cloud-export format.
 
 enum PilotLogJSONError: LocalizedError {
     case invalidFormat
@@ -10,8 +10,8 @@ enum PilotLogJSONError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .invalidFormat: return "Il file non è un backup PilotLog valido."
-        case .noFlights:     return "Nessun volo trovato nel file JSON."
+        case .invalidFormat: return "The file is not a valid PilotLog backup."
+        case .noFlights:     return "No flights found in JSON file."
         }
     }
 }
@@ -36,7 +36,7 @@ final class PilotLogJSONImporter {
             throw PilotLogJSONError.invalidFormat
         }
 
-        // Raggruppa per tabella (case-insensitive)
+        // Group by table (case-insensitive)
         var byTable: [String: [Meta]] = [:]
         for record in records {
             guard let table = record["table"] as? String,
@@ -88,7 +88,7 @@ final class PilotLogJSONImporter {
             let night  = min2h(meta, "minNIGHT")
             let ifr    = min2h(meta, "minIFR")
 
-            // Orari: minuti dalla mezzanotte UTC
+            // Times: minutes from midnight UTC
             let depMins = intVal(meta, "DepTimeUTC")
             let arrMins = intVal(meta, "ArrTimeUTC")
             let depTime: Date? = depMins > 0 ? date.addingTimeInterval(Double(depMins) * 60) : nil
@@ -112,7 +112,7 @@ final class PilotLogJSONImporter {
             let isMEP   = modelUp == "MEP" || modelUp == "MEP LAND"
             let isMP    = !isSEP && !isMEP
 
-            // Pilota
+            // Pilot
             let picName = pilot[str(meta, "P1Code")] ?? ""
 
             let flight = Flight(

@@ -31,12 +31,12 @@ final class FlightStore: ObservableObject {
         startNetworkMonitor()
     }
 
-    /// Normalizza aeromobili con dati vecchi (es. icaoCode="Airbus A320" → icao="A320", manufacturer="Airbus")
+    /// Normalize aircraft with legacy data (e.g. icaoCode="Airbus A320" → icao="A320", manufacturer="Airbus")
     private func migrateAircraftIfNeeded() {
         var changed = false
         for i in aircraft.indices {
             let raw = aircraft[i].icaoCode
-            // Se icaoCode contiene spazi o più di 4 caratteri, è un tipo grezzo non parsato
+            // If icaoCode contains spaces or more than 4 chars, it's a raw unparsed type
             if raw.contains(" ") || raw.count > 4 {
                 let parsed = Self.parseFlightType(raw)
                 aircraft[i].icaoCode = parsed.icao
@@ -51,7 +51,7 @@ final class FlightStore: ObservableObject {
         }
     }
 
-    // MARK: - Local Save (istantaneo, offline)
+    // MARK: - Local Save (instant, offline)
 
     func save(_ flight: Flight) async {
         var updated = flight
@@ -80,13 +80,13 @@ final class FlightStore: ObservableObject {
                 errorMessage = error.localizedDescription
             }
         }
-        // Se offline, il volo è già rimosso dal locale.
-        // Al prossimo sync Supabase non lo troverà come "pending" da pushare.
+        // If offline, flight is already removed locally.
+        // On next sync Supabase won't find it as "pending" to push.
         local.markSynced(flight.id)
         pendingCount = local.loadPendingIDs().count
     }
 
-    // MARK: - Fetch (pull da Supabase + merge con locale)
+    // MARK: - Fetch (pull from Supabase + merge with local)
 
     func fetchFlights() async {
         guard await remote.isConfigured else {
@@ -122,7 +122,7 @@ final class FlightStore: ObservableObject {
                 _ = try await remote.save(flight)
                 local.markSynced(flight.id)
             } catch {
-                // Lascia in pending, riproverà al prossimo sync
+                // Leave in pending, will retry on next sync
             }
         }
 
@@ -130,7 +130,7 @@ final class FlightStore: ObservableObject {
         if pendingCount == 0 { lastSyncDate = Date() }
     }
 
-    // MARK: - Import (da SQLite o altra fonte)
+    // MARK: - Import (from SQLite or other source)
 
     func importFlights(_ incoming: [Flight]) {
         var merged = Dictionary(uniqueKeysWithValues: flights.map { ($0.id, $0) })
@@ -164,12 +164,12 @@ final class FlightStore: ObservableObject {
         local.saveAircraft(aircraft)
     }
 
-    /// Estrae aeromobili unici dai voli importati e li aggiunge alla lista.
+    /// Extracts unique aircraft from imported flights and adds them to the list.
     func autoPopulateAircraft() -> Int {
         var seen = Set(aircraft.map { $0.registration.uppercased() })
         var added = 0
 
-        // Raggruppa i voli per marche
+        // Group flights by registration
         var byReg: [String: [Flight]] = [:]
         for f in flights where !f.aircraftRegistration.isEmpty {
             byReg[f.aircraftRegistration.uppercased(), default: []].append(f)
@@ -179,14 +179,14 @@ final class FlightStore: ObservableObject {
             guard !seen.contains(reg) else { continue }
             seen.insert(reg)
 
-            // Tipo più frequente per queste marche
+            // Most frequent type for this registration
             let typeCounts = Dictionary(grouping: regFlights, by: { $0.aircraftType })
             let bestType = typeCounts.max(by: { $0.value.count < $1.value.count })?.key ?? ""
 
-            // Parsa il tipo grezzo: "Airbus A320", "A320", "B738", "Cessna 172", etc.
+            // Parse raw type: "Airbus A320", "A320", "B738", "Cessna 172", etc.
             let parsed = Self.parseFlightType(bestType)
 
-            // Classifica SE/ME/MP basata sui tempi prevalenti dei voli
+            // Classify SE/ME/MP based on predominant flight times
             let totalSE = regFlights.reduce(0.0) { $0 + $1.seSinglePilotTime }
             let totalME = regFlights.reduce(0.0) { $0 + $1.meSinglePilotTime }
             let totalMP = regFlights.reduce(0.0) { $0 + $1.multiPilotTime }
@@ -211,7 +211,7 @@ final class FlightStore: ObservableObject {
         return added
     }
 
-    // MARK: - Parsing tipo aeromobile da voli importati
+    // MARK: - Parsing aircraft type from imported flights
 
     private static let manufacturerMap: [(keyword: String, name: String)] = [
         ("AIRBUS", "Airbus"),
@@ -237,7 +237,7 @@ final class FlightStore: ObservableObject {
         ("ROBIN", "Robin"),
     ]
 
-    /// Mapping modelli comuni → codice ICAO
+    /// Mapping common models → ICAO code
     private static let modelToICAO: [String: String] = [
         "A318": "A318", "A319": "A319", "A320": "A320", "A321": "A321",
         "A319NEO": "A19N", "A320NEO": "A20N", "A321NEO": "A21N",
@@ -275,13 +275,13 @@ final class FlightStore: ObservableObject {
         var variant: String
     }
 
-    /// Parsa stringhe tipo dai voli: "Airbus A320", "A320", "B738", "Cessna 172 Skyhawk", etc.
+    /// Parse type strings from flights: "Airbus A320", "A320", "B738", "Cessna 172 Skyhawk", etc.
     static func parseFlightType(_ raw: String) -> ParsedFlightType {
         let upper = raw.trimmingCharacters(in: .whitespaces).uppercased()
         var manufacturer = ""
         var rest = upper
 
-        // 1. Estrai manufacturer se presente all'inizio
+        // 1. Extract manufacturer if present at the start
         for (keyword, name) in manufacturerMap {
             if upper.hasPrefix(keyword) {
                 manufacturer = name
@@ -290,7 +290,7 @@ final class FlightStore: ObservableObject {
             }
         }
 
-        // 2. Separa modello e variant: "A320-271N" → model="A320", variant="271N"
+        // 2. Separate model and variant: "A320-271N" → model="A320", variant="271N"
         let normalized = rest.replacingOccurrences(of: "-", with: " ")
         let parts = normalized.split(separator: " ").map(String.init)
 
@@ -302,12 +302,12 @@ final class FlightStore: ObservableObject {
             variant = ""
         }
 
-        // 3. Cerca codice ICAO dal modello
-        //    Prima prova "A320" diretto, poi "A320-271N" completo
+        // 3. Look up ICAO code from model
+        //    Try "A320" directly first, then full "A320-271N"
         let fullModel = variant.isEmpty ? modelPart : "\(modelPart)-\(variant)"
         let icao = modelToICAO[fullModel]
             ?? modelToICAO[modelPart]
-            ?? modelPart  // fallback: usa il modello come codice ICAO
+            ?? modelPart  // fallback: use model as ICAO code
 
         return ParsedFlightType(
             icao: icao,
@@ -317,7 +317,7 @@ final class FlightStore: ObservableObject {
         )
     }
 
-    /// Cerca un aeromobile per marche (case insensitive)
+    /// Find an aircraft by registration (case insensitive)
     func findAircraft(byRegistration reg: String) -> Aircraft? {
         aircraft.first { $0.registration.uppercased() == reg.uppercased() }
     }
@@ -343,7 +343,7 @@ final class FlightStore: ObservableObject {
         var merged = Dictionary(uniqueKeysWithValues: flights.map { ($0.id, $0) })
         for rf in remoteFlights {
             if let local = merged[rf.id] {
-                // Vince chi ha updatedAt più recente
+                // Most recent updatedAt wins
                 if rf.updatedAt > local.updatedAt { merged[rf.id] = rf }
             } else {
                 merged[rf.id] = rf

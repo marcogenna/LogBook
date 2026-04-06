@@ -2,8 +2,8 @@ import Foundation
 import SQLite3
 
 // MARK: - SQLiteImporter
-// Legge un file .sqlite/.db e mappa le colonne trovate → [Flight].
-// Supporta colonne di LogTen Pro, Zulu Log, e schemi generici.
+// Reads a .sqlite/.db file and maps found columns → [Flight].
+// Supports LogTen Pro, Zulu Log, and generic schemas.
 
 enum SQLiteImportError: LocalizedError {
     case cannotOpen(String)
@@ -12,9 +12,9 @@ enum SQLiteImportError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .cannotOpen(let p): return "Impossibile aprire il database: \(p)"
-        case .noSuitableTable:  return "Nessuna tabella con dati di volo trovata."
-        case .noRows:           return "Il database non contiene voli da importare."
+        case .cannotOpen(let p): return "Cannot open database: \(p)"
+        case .noSuitableTable:  return "No table with flight data found."
+        case .noRows:           return "The database contains no flights to import."
         }
     }
 }
@@ -23,8 +23,8 @@ final class SQLiteImporter {
 
     // MARK: - Public
 
-    /// Apre il file e restituisce i voli trovati.
-    /// Rileva automaticamente: PilotLog JSON, PilotLog SQLite, generico.
+    /// Opens the file and returns the flights found.
+    /// Auto-detects: PilotLog JSON, PilotLog SQLite, generic.
     static func importFlights(from url: URL) throws -> [Flight] {
 
         // PilotLog JSON export
@@ -32,12 +32,12 @@ final class SQLiteImporter {
             return try PilotLogJSONImporter.importFlights(from: url)
         }
 
-        // PilotLog SQLite (ha la colonna minTOTAL)
+        // PilotLog SQLite (has the minTOTAL column)
         if PilotLogImporter.isPilotLog(at: url) {
             return try PilotLogImporter.importFlights(from: url)
         }
 
-        // Importer generico per altri formati
+        // Generic importer for other formats
         var db: OpaquePointer?
         guard sqlite3_open_v2(url.path, &db, SQLITE_OPEN_READONLY, nil) == SQLITE_OK,
               let db else {
@@ -72,7 +72,7 @@ final class SQLiteImporter {
         return tables
     }
 
-    /// Sceglie la tabella più probabile per i dati di volo.
+    /// Picks the most likely table for flight data.
     private static func pickFlightTable(from tables: [String]) -> String? {
         let preferred = ["flights", "flight", "logbook", "log", "entries",
                          "ZFLIGHT", "ZLOGBOOKENTRY"]
@@ -81,7 +81,7 @@ final class SQLiteImporter {
                 return tables.first { $0.lowercased() == name.lowercased() }!
             }
         }
-        // Fallback: prima tabella disponibile
+        // Fallback: first available table
         return tables.first
     }
 
@@ -104,7 +104,7 @@ final class SQLiteImporter {
 
     // MARK: - Column mapping
 
-    /// Mappa i nomi delle colonne trovate → chiavi semantiche Flight.
+    /// Maps found column names → semantic Flight keys.
     private struct ColMap {
         var id, date, depPlace, depTime, arrPlace, arrTime: String?
         var acType, acReg, seSP, meSP, mp, total, picName: String?
@@ -166,7 +166,7 @@ final class SQLiteImporter {
         }
         defer { sqlite3_finalize(stmt) }
 
-        // Leggi nomi colonne nell'ordine restituito dalla query
+        // Read column names in the order returned by the query
         let colCount = Int(sqlite3_column_count(stmt))
         var colNames: [String] = []
         for i in 0..<colCount {
@@ -220,7 +220,7 @@ final class SQLiteImporter {
                 updatedAt:            Date()
             )
 
-            // Normalizza i tempi: se sembrano minuti (es. 90 min invece di 1.5h)
+            // Normalize times: if they look like minutes (e.g. 90 min instead of 1.5h)
             f = normalizeTime(f)
 
             flights.append(f)
@@ -258,7 +258,7 @@ final class SQLiteImporter {
 
     // MARK: - Time normalization
 
-    /// Alcuni logbook salvano i tempi in minuti. Se total > 24 probabilmente è in minuti.
+    /// Some logbooks store times in minutes. If total > 24 it's probably in minutes.
     private static func normalizeTime(_ f: Flight) -> Flight {
         guard f.totalFlightTime > 24 else { return f }
         var n = f

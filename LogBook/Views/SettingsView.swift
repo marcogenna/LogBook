@@ -22,11 +22,11 @@ struct SettingsView: View {
     var body: some View {
         Form {
 
-            // MARK: Pilota
-            Section("Pilota") {
-                FieldRow(label: "Nome", placeholder: "Mario Rossi", text: $pilotName)
-                FieldRow(label: "Numero Licenza", placeholder: "ITA.ATPL.12345", text: $pilotLicense)
-                FieldRow(label: "PIC predefinito", placeholder: "Nome del comandante", text: $defaultPICName)
+            // MARK: Pilot
+            Section("Pilot") {
+                FieldRow(label: "Name", placeholder: "John Smith", text: $pilotName)
+                FieldRow(label: "License Number", placeholder: "ITA.ATPL.12345", text: $pilotLicense)
+                FieldRow(label: "Default PIC", placeholder: "PIC name", text: $defaultPICName)
             }
 
             // MARK: Supabase
@@ -57,18 +57,18 @@ struct SettingsView: View {
                 .padding(.vertical, 4)
 
                 HStack(spacing: 10) {
-                    Button("Salva credenziali") {
+                    Button("Save credentials") {
                         saveCredentials()
                     }
                     .buttonStyle(.borderedProminent)
                     .disabled(urlInput.isEmpty || anonKeyInput.isEmpty)
 
-                    Button("Test connessione") {
+                    Button("Test connection") {
                         Task { await testConnection() }
                     }
                     .disabled(!hasCredentials)
 
-                    Button("Cancella", role: .destructive) {
+                    Button("Clear", role: .destructive) {
                         clearCredentials()
                     }
 
@@ -79,7 +79,7 @@ struct SettingsView: View {
                     Spacer()
 
                     if savedBadge {
-                        Label("Salvato", systemImage: "checkmark.circle.fill")
+                        Label("Saved", systemImage: "checkmark.circle.fill")
                             .foregroundStyle(.green)
                             .font(.caption)
                     }
@@ -87,7 +87,7 @@ struct SettingsView: View {
                     if let result = testResult {
                         switch result {
                         case .success(let count):
-                            Label("\(count) voli trovati", systemImage: "checkmark.circle.fill")
+                            Label("\(count) flights found", systemImage: "checkmark.circle.fill")
                                 .foregroundStyle(.green).font(.caption)
                         case .failure(let msg):
                             Label(msg, systemImage: "xmark.circle.fill")
@@ -101,9 +101,9 @@ struct SettingsView: View {
                 Text("Supabase")
             } footer: {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Ottieni URL e Anon Key da supabase.com → Project Settings → API")
+                    Text("Get URL and Anon Key from supabase.com → Project Settings → API")
                     if !storedURL.isEmpty {
-                        Label("Connesso: \(storedURL)", systemImage: "checkmark.circle")
+                        Label("Connected: \(storedURL)", systemImage: "checkmark.circle")
                             .foregroundStyle(.green)
                     }
                 }
@@ -114,19 +114,19 @@ struct SettingsView: View {
             // MARK: Info
             Section("Info") {
                 HStack {
-                    Text("Versione")
+                    Text("Version")
                     Spacer()
                     Text(appVersion).foregroundStyle(.secondary)
                 }
                 HStack {
-                    Text("Voli caricati")
+                    Text("Flights loaded")
                     Spacer()
                     Text("\(store.flights.count)").foregroundStyle(.secondary)
                 }
             }
         }
         .formStyle(.grouped)
-        .navigationTitle("Impostazioni")
+        .navigationTitle("Settings")
         .frame(minWidth: 500)
         .onAppear { loadCredentials() }
     }

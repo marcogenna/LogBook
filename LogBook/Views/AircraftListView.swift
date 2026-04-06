@@ -18,22 +18,22 @@ struct AircraftListView: View {
                 aircraftTable
             }
         }
-        .navigationTitle("Aeromobili")
-        .searchable(text: $searchText, prompt: "Cerca per marche o tipo…")
+        .navigationTitle("Aircraft")
+        .searchable(text: $searchText, prompt: "Search by registration or type…")
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
                 Button {
                     populatedCount = store.autoPopulateAircraft()
                     showPopulateAlert = true
                 } label: {
-                    Label("Popola da voli", systemImage: "wand.and.stars")
+                    Label("Import from flights", systemImage: "wand.and.stars")
                 }
-                .help("Estrai aeromobili dai voli importati")
+                .help("Extract aircraft from imported flights")
 
                 Button {
                     editingAircraft = Aircraft()
                 } label: {
-                    Label("Aggiungi", systemImage: "plus")
+                    Label("Add", systemImage: "plus")
                 }
 
                 Button {
@@ -43,7 +43,7 @@ struct AircraftListView: View {
                         selection = nil
                     }
                 } label: {
-                    Label("Elimina", systemImage: "trash")
+                    Label("Delete", systemImage: "trash")
                 }
                 .disabled(selection == nil)
             }
@@ -53,10 +53,10 @@ struct AircraftListView: View {
                 store.saveAircraft(saved)
             }
         }
-        .alert("Aeromobili estratti", isPresented: $showPopulateAlert) {
+        .alert("Aircraft imported", isPresented: $showPopulateAlert) {
             Button("OK") {}
         } message: {
-            Text("\(populatedCount) nuovi aeromobili aggiunti dai voli esistenti.")
+            Text("\(populatedCount) new aircraft added from existing flights.")
         }
     }
 
@@ -69,21 +69,21 @@ struct AircraftListView: View {
                 .foregroundStyle(.secondary)
 
             VStack(spacing: 8) {
-                Text("Nessun aeromobile")
+                Text("No aircraft")
                     .font(.title2.bold())
-                Text("Aggiungi manualmente o estrai\ndai voli già importati.")
+                Text("Add manually or extract\nfrom imported flights.")
                     .multilineTextAlignment(.center)
                     .foregroundStyle(.secondary)
             }
 
             HStack(spacing: 16) {
-                Button("Popola da voli") {
+                Button("Import from flights") {
                     populatedCount = store.autoPopulateAircraft()
                     showPopulateAlert = true
                 }
                 .buttonStyle(.borderedProminent)
 
-                Button("Aggiungi manualmente") {
+                Button("Add manually") {
                     editingAircraft = Aircraft()
                 }
             }
@@ -108,34 +108,34 @@ struct AircraftListView: View {
 
     private var aircraftTable: some View {
         Table(filteredAircraft, selection: $selection) {
-            TableColumn("Marche", value: \.registration)
+            TableColumn("Registration", value: \.registration)
                 .width(min: 80, ideal: 100)
             TableColumn("ICAO", value: \.icaoCode)
                 .width(min: 50, ideal: 60)
-            TableColumn("Costruttore", value: \.manufacturer)
+            TableColumn("Manufacturer", value: \.manufacturer)
                 .width(min: 80, ideal: 120)
-            TableColumn("Modello", value: \.model)
+            TableColumn("Model", value: \.model)
                 .width(min: 60, ideal: 80)
-            TableColumn("Variante", value: \.variant)
+            TableColumn("Variant", value: \.variant)
                 .width(min: 50, ideal: 70)
-            TableColumn("Classe") { ac in
+            TableColumn("Class") { ac in
                 Text(ac.classificationLabel)
                     .foregroundStyle(classColor(ac))
             }
             .width(min: 40, ideal: 50)
-            TableColumn("Motore", value: \.engineType)
+            TableColumn("Engine", value: \.engineType)
                 .width(min: 80, ideal: 120)
-            TableColumn("Compagnia", value: \.company)
+            TableColumn("Operator", value: \.company)
                 .width(min: 100, ideal: 140)
         }
         .contextMenu(forSelectionType: Aircraft.ID.self) { ids in
             if let id = ids.first,
                let ac = store.aircraft.first(where: { $0.id == id }) {
-                Button("Modifica") {
+                Button("Edit") {
                     editingAircraft = ac
                 }
                 Divider()
-                Button("Elimina", role: .destructive) {
+                Button("Delete", role: .destructive) {
                     store.deleteAircraft(ac)
                     if selection == id { selection = nil }
                 }

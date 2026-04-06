@@ -2,8 +2,8 @@ import Foundation
 import SQLite3
 
 // MARK: - PilotLog Importer
-// Importa da PilotLog (backup .db) con JOIN su Aircraft, Airfield, Pilot.
-// Tutti i tempi sono in MINUTI nel database PilotLog → conversione automatica in ore.
+// Imports from PilotLog (backup .db) with JOIN on Aircraft, Airfield, Pilot.
+// All times are in MINUTES in PilotLog database → automatic conversion to hours.
 
 enum PilotLogImportError: LocalizedError {
     case cannotOpen(String)
@@ -12,16 +12,16 @@ enum PilotLogImportError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .cannotOpen(let f): return "Impossibile aprire: \(f)"
-        case .queryFailed:       return "Errore nella query al database PilotLog."
-        case .noFlights:         return "Nessun volo trovato nel database."
+        case .cannotOpen(let f): return "Cannot open: \(f)"
+        case .queryFailed:       return "Query failed on PilotLog database."
+        case .noFlights:         return "No flights found in database."
         }
     }
 }
 
 final class PilotLogImporter {
 
-    /// Rileva se il file è un database PilotLog (ha la tabella Flight con colonna minTOTAL).
+    /// Detects whether the file is a PilotLog database (has the Flight table with minTOTAL column).
     static func isPilotLog(at url: URL) -> Bool {
         var db: OpaquePointer?
         guard sqlite3_open_v2(url.path, &db, SQLITE_OPEN_READONLY, nil) == SQLITE_OK,
@@ -114,7 +114,7 @@ final class PilotLogImporter {
             let dateStr = str("DateUTC")
             guard let date = parseDate(dateStr) else { continue }
 
-            // Orari: minuti dalla mezzanotte UTC → Date
+            // Times: minutes from midnight UTC → Date
             let depMins = int("DepTimeUTC")
             let arrMins = int("ArrTimeUTC")
             let depTime: Date? = depMins > 0 ? date.addingTimeInterval(Double(depMins) * 60) : nil
@@ -135,7 +135,7 @@ final class PilotLogImporter {
             let acType   = str("AcType").trimmingCharacters(in: .whitespaces)
             let isSEP    = model.contains("SEP") || model.contains("TMG")
             let isMEP    = model.contains("MEP")
-            let isMP     = !isSEP && !isMEP   // tutto il resto (jet commerciali = multipilota)
+            let isMP     = !isSEP && !isMEP   // everything else (commercial jets = multi pilot)
 
             let seSP  = isSEP ? total : 0.0
             let meSP  = isMEP ? total : 0.0

@@ -29,14 +29,14 @@ struct ImportView: View {
                     failedView(msg)
                 }
             }
-            .navigationTitle("Importa Logbook")
+            .navigationTitle("Import Logbook")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Chiudi") { dismiss() }
+                    Button("Close") { dismiss() }
                 }
                 if case .preview = phase {
                     ToolbarItem(placement: .confirmationAction) {
-                        Button("Importa \(preview.count) voli") {
+                        Button("Import \(preview.count) flights") {
                             doImport()
                         }
                         .buttonStyle(.borderedProminent)
@@ -56,14 +56,14 @@ struct ImportView: View {
                 .foregroundStyle(.secondary)
 
             VStack(spacing: 8) {
-                Text("Seleziona un file da importare")
+                Text("Select a file to import")
                     .font(.title2.bold())
-                Text("Supporta PilotLog (.db / .json), LogTen Pro,\ne qualsiasi database SQLite con dati di volo.")
+                Text("Supports PilotLog (.db / .json), LogTen Pro,\nand any SQLite database with flight data.")
                     .multilineTextAlignment(.center)
                     .foregroundStyle(.secondary)
             }
 
-            Button("Scegli file…") { openFile() }
+            Button("Choose file…") { openFile() }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
         }
@@ -76,11 +76,11 @@ struct ImportView: View {
     private var previewView: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack {
-                Label("\(preview.count) voli trovati", systemImage: "checkmark.circle.fill")
+                Label("\(preview.count) flights found", systemImage: "checkmark.circle.fill")
                     .foregroundStyle(.green)
                     .font(.headline)
                 Spacer()
-                Text("Anteprima (prime 5 righe)")
+                Text("Preview (first 5 rows)")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -88,7 +88,7 @@ struct ImportView: View {
 
             Divider()
 
-            // Lista semplice (evita Table per affidabilità)
+            // Simple list (avoids Table for reliability)
             VStack(spacing: 0) {
                 previewHeader
                 ForEach(Array(preview.prefix(5))) { flight in
@@ -99,7 +99,7 @@ struct ImportView: View {
 
             Divider()
 
-            Text("I voli importati saranno salvati in locale e sincronizzati su Supabase quando disponibile.")
+            Text("Imported flights will be saved locally and synced to Supabase when available.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .padding()
@@ -108,11 +108,11 @@ struct ImportView: View {
 
     private var previewHeader: some View {
         HStack(spacing: 0) {
-            Text("Data").frame(width: 90, alignment: .leading)
-            Text("Rotta").frame(width: 130, alignment: .leading)
-            Text("Tipo").frame(width: 80, alignment: .leading)
-            Text("Marche").frame(width: 80, alignment: .leading)
-            Text("Totale").frame(width: 60, alignment: .trailing)
+            Text("Date").frame(width: 90, alignment: .leading)
+            Text("Route").frame(width: 130, alignment: .leading)
+            Text("Type").frame(width: 80, alignment: .leading)
+            Text("Reg.").frame(width: 80, alignment: .leading)
+            Text("Total").frame(width: 60, alignment: .trailing)
             Text("PIC").frame(width: 60, alignment: .trailing)
             Spacer()
         }
@@ -143,9 +143,9 @@ struct ImportView: View {
         VStack(spacing: 16) {
             ProgressView()
                 .controlSize(.large)
-            Text(preview.isEmpty ? "Lettura file in corso…" : "Importazione in corso…")
+            Text(preview.isEmpty ? "Reading file…" : "Importing…")
                 .font(.headline)
-            Text("Potrebbe richiedere qualche secondo.")
+            Text("This may take a few seconds.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -158,11 +158,11 @@ struct ImportView: View {
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 64))
                 .foregroundStyle(.green)
-            Text("\(count) voli importati")
+            Text("\(count) flights imported")
                 .font(.title2.bold())
-            Text("Disponibili nel Logbook.")
+            Text("Available in the Logbook.")
                 .foregroundStyle(.secondary)
-            Button("Chiudi") { dismiss() }
+            Button("Close") { dismiss() }
                 .buttonStyle(.borderedProminent)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -174,14 +174,14 @@ struct ImportView: View {
             Image(systemName: "xmark.circle.fill")
                 .font(.system(size: 64))
                 .foregroundStyle(.red)
-            Text("Importazione fallita")
+            Text("Import failed")
                 .font(.title2.bold())
             Text(msg)
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.secondary)
                 .font(.callout)
                 .textSelection(.enabled)
-            Button("Riprova") { phase = .pick }
+            Button("Retry") { phase = .pick }
                 .buttonStyle(.borderedProminent)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -192,7 +192,7 @@ struct ImportView: View {
 
     private func openFile() {
         let panel = NSOpenPanel()
-        panel.title = "Seleziona logbook da importare"
+        panel.title = "Select logbook to import"
         panel.allowedContentTypes = [.data]
         panel.allowsMultipleSelection = false
         panel.canChooseDirectories = false
@@ -202,7 +202,7 @@ struct ImportView: View {
 
         phase = .importing
 
-        // Copia nel sandbox temp, poi parsa in background
+        // Copy to sandbox temp, then parse in background
         Task {
             do {
                 let tempDir  = FileManager.default.temporaryDirectory

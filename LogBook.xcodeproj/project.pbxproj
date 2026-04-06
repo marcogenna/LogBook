@@ -192,9 +192,9 @@
 			};
 			buildConfigurationList = A1000005;
 			compatibilityVersion = "Xcode 14.0";
-			developmentRegion = it;
+			developmentRegion = en;
 			hasScannedForEncodings = 0;
-			knownRegions = (it, en, Base);
+			knownRegions = (en, Base);
 			mainGroup = A1000002;
 			productRefGroup = A1000008;
 			projectDirPath = "";

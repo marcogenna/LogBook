@@ -2,9 +2,9 @@ import SwiftUI
 
 enum SidebarItem: String, CaseIterable, Identifiable {
     case logbook = "Logbook"
-    case aircraft = "Aeromobili"
-    case statistics = "Statistiche"
-    case settings = "Impostazioni"
+    case aircraft = "Aircraft"
+    case statistics = "Statistics"
+    case settings = "Settings"
 
     var id: String { rawValue }
 
@@ -56,7 +56,7 @@ struct ContentView: View {
                 SettingsView()
             }
         }
-        .alert("Errore", isPresented: Binding(
+        .alert("Error", isPresented: Binding(
             get: { store.errorMessage != nil },
             set: { if !$0 { store.errorMessage = nil } }
         )) {

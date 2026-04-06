@@ -29,7 +29,7 @@ struct Flight: Identifiable, Codable {
     var remarks: String
     var updatedAt: Date
 
-    // MARK: - CodingKeys (snake_case per Supabase/PostgREST)
+    // MARK: - CodingKeys (snake_case for Supabase/PostgREST)
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -130,7 +130,7 @@ extension Flight {
     }
 }
 
-// MARK: - JSON Coders per Supabase
+// MARK: - JSON Coders for Supabase
 
 extension JSONDecoder {
     static var supabase: JSONDecoder {

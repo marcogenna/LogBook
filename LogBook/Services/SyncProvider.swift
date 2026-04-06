@@ -1,8 +1,8 @@
 import Foundation
 
 // MARK: - SyncProvider
-// Protocollo astratto: cambia backend sostituendo solo il provider,
-// FlightStore e tutta l'app restano invariati.
+// Abstract protocol: swap backend by replacing only the provider,
+// FlightStore and the entire app remain unchanged.
 
 protocol SyncProvider: Actor {
     func fetchAll() async throws -> [Flight]
@@ -22,13 +22,13 @@ enum SyncError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .notConfigured:
-            return "Configura l'URL e la API Key di Supabase nelle Impostazioni."
+            return "Configure the Supabase URL and API Key in Settings."
         case .httpError(let code, let body):
-            return "Errore HTTP \(code): \(body)"
+            return "HTTP Error \(code): \(body)"
         case .decodingFailed(let err):
-            return "Errore decodifica risposta: \(err.localizedDescription)"
+            return "Response decoding error: \(err.localizedDescription)"
         case .noData:
-            return "Nessun dato ricevuto dal server."
+            return "No data received from server."
         }
     }
 }

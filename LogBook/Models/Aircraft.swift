@@ -21,7 +21,7 @@ struct Aircraft: Identifiable, Codable {
     var notes: String
     var updatedAt: Date
 
-    // Campo legacy per compatibilità con voli importati
+    // Legacy computed property for compatibility with imported flights
     var type: String {
         get {
             if !manufacturer.isEmpty && !model.isEmpty {
@@ -89,9 +89,9 @@ struct Aircraft: Identifiable, Codable {
         self.updatedAt = updatedAt
     }
 
-    // MARK: - Custom Decoder (per compatibilità con JSON vecchi senza i nuovi campi)
+    // MARK: - Custom Decoder (for backward compatibility with old JSON without new fields)
 
-    // Chiave legacy per migrare JSON vecchi che avevano "type" come campo stored
+    // Legacy key to migrate old JSON that had "type" as a stored field
     private enum LegacyCodingKeys: String, CodingKey {
         case type
     }
@@ -116,7 +116,7 @@ struct Aircraft: Identifiable, Codable {
         notes           = try c.decodeIfPresent(String.self, forKey: .notes) ?? ""
         updatedAt       = try c.decodeIfPresent(Date.self, forKey: .updatedAt) ?? Date()
 
-        // Migrazione: se icaoCode è vuoto ma c'era il vecchio "type", usalo come icaoCode
+        // Migration: if icaoCode is empty but old "type" key exists, use it as icaoCode
         if icaoCode.isEmpty {
             let legacy = try? decoder.container(keyedBy: LegacyCodingKeys.self)
             if let oldType = try? legacy?.decodeIfPresent(String.self, forKey: .type), !oldType.isEmpty {
@@ -136,7 +136,7 @@ extension Aircraft {
         return "—"
     }
 
-    /// Descrizione completa del tipo: "Airbus A320-271N" o fallback a icaoCode
+    /// Full type description: "Airbus A320-271N" or fallback to icaoCode
     var fullTypeDescription: String {
         var parts: [String] = []
         if !manufacturer.isEmpty { parts.append(manufacturer) }

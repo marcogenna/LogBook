@@ -1,14 +1,14 @@
 import Foundation
 
 // MARK: - SupabaseProvider
-// Usa solo URLSession + PostgREST — nessun SDK esterno.
-// Migrazione a self-hosted: cambia solo projectURL in Impostazioni.
+// Uses only URLSession + PostgREST — no external SDK.
+// To migrate to self-hosted: just change projectURL in Settings.
 
 actor SupabaseProvider: SyncProvider {
 
     private static let table = "flights"
 
-    // Credenziali lette al momento della chiamata (mai cachate)
+    // Credentials read at call time (never cached)
     private var projectURL: String { UserDefaults.standard.string(forKey: "supabaseURL") ?? "" }
     private var anonKey: String { Keychain.load(for: Keychain.supabaseAnonKey) ?? "" }
 
@@ -48,14 +48,14 @@ actor SupabaseProvider: SyncProvider {
         addHeaders(to: &req)
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         req.setValue("application/json", forHTTPHeaderField: "Accept")
-        // Upsert: se l'id esiste già, aggiorna
+        // Upsert: if id already exists, update
         req.setValue("resolution=merge-duplicates", forHTTPHeaderField: "Prefer")
         req.httpBody = try JSONEncoder.supabase.encode(flight)
 
         let (data, response) = try await URLSession.shared.data(for: req)
         try checkHTTP(response, data)
 
-        // Supabase restituisce array anche per insert singolo
+        // Supabase returns an array even for single insert
         do {
             let flights = try JSONDecoder.supabase.decode([Flight].self, from: data)
             return flights.first ?? flight

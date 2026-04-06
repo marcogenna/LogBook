@@ -1,15 +1,15 @@
 import Foundation
 
 // MARK: - LocalStore
-// Persiste i voli in un file JSON nella Application Support.
-// Funziona sempre, anche senza rete.
+// Persists flights in a JSON file in Application Support.
+// Works always, even without network.
 
 final class LocalStore {
 
     static let shared = LocalStore()
 
     private let fileURL: URL
-    private let pendingURL: URL  // IDs dei voli non ancora sincronizzati
+    private let pendingURL: URL  // IDs of flights not yet synced
     private let aircraftURL: URL
 
     private init() {
@@ -40,7 +40,7 @@ final class LocalStore {
 
     // MARK: - Pending Sync
 
-    /// IDs dei voli modificati localmente ma non ancora confermati da Supabase
+    /// IDs of flights modified locally but not yet confirmed by Supabase
     func loadPendingIDs() -> Set<UUID> {
         guard let data = try? Data(contentsOf: pendingURL),
               let ids = try? JSONDecoder().decode([UUID].self, from: data)

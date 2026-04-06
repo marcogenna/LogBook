@@ -1,13 +1,13 @@
 import Foundation
 
 // MARK: - AircraftLookupService
-// Cerca dati aeromobile da fonti gratuite + database ICAO locale.
+// Looks up aircraft data from free sources + local ICAO database.
 
 actor AircraftLookupService {
 
     static let shared = AircraftLookupService()
 
-    // MARK: - ICAO Type Database (locale, dal bundle)
+    // MARK: - ICAO Type Database (local, from bundle)
 
     private var icaoTypes: [ICAOType] = []
 
@@ -30,14 +30,14 @@ actor AircraftLookupService {
         icaoTypes = types
     }
 
-    /// Cerca tipo ICAO nel database locale (offline, istantaneo)
+    /// Look up ICAO type in local database (offline, instant)
     func lookupByICAOCode(_ code: String) -> ICAOType? {
         loadICAODatabase()
         let q = code.trimmingCharacters(in: .whitespaces).uppercased()
         return icaoTypes.first { $0.icao == q }
     }
 
-    /// Cerca tutti i tipi che contengono la query (per autocomplete)
+    /// Search all types containing the query (for autocomplete)
     func searchICAOTypes(_ query: String) -> [ICAOType] {
         loadICAODatabase()
         let q = query.trimmingCharacters(in: .whitespaces).uppercased()
@@ -49,16 +49,16 @@ actor AircraftLookupService {
         }
     }
 
-    // MARK: - Online Lookup (adsbdb.com — gratuito, no auth)
+    // MARK: - Online Lookup (adsbdb.com — free, no auth)
 
-    /// Info strutturata pronta per popolare l'Aircraft model
+    /// Structured info ready to populate the Aircraft model
     struct AircraftInfo {
         let registration: String
         let icaoCode: String
         let manufacturer: String
         let model: String
         let variant: String
-        let fullType: String      // "A320-271N" originale dall'API
+        let fullType: String      // "A320-271N" original from API
         let engineType: String
         let engineCount: Int
         let mtow: String
@@ -68,12 +68,12 @@ actor AircraftLookupService {
         let isMultiPilot: Bool
     }
 
-    /// Cerca aeromobile per marche — combina API online + database ICAO locale
+    /// Look up aircraft by registration — combines online API + local ICAO database
     func fullLookup(registration: String) async -> AircraftInfo? {
         let reg = registration.trimmingCharacters(in: .whitespaces).uppercased()
         guard !reg.isEmpty else { return nil }
 
-        // 1. Chiama API adsbdb.com
+        // 1. Call adsbdb.com API
         let urlString = "https://api.adsbdb.com/v0/aircraft/\(reg)"
         guard let url = URL(string: urlString) else { return nil }
 
@@ -104,13 +104,13 @@ actor AircraftLookupService {
         //    "B737-8AS"  → model="B737", variant="8AS"
         let (model, variant) = parseTypeField(typeField, icaoFallback: icaoType)
 
-        // 4. Correggi ICAO code — adsbdb spesso restituisce il codice generico
-        //    "A320" anche per i neo (che dovrebbe essere "A20N"), etc.
+        // 4. Correct ICAO code — adsbdb often returns the generic code
+        //    "A320" even for neo (which should be "A20N"), etc.
         let correctedICAO = correctICAOCode(apiCode: icaoType, variant: variant, model: model)
 
-        // 5. Arricchisci con database ICAO locale (usa codice corretto)
+        // 5. Enrich with local ICAO database (use corrected code)
         let icaoInfo = lookupByICAOCode(correctedICAO)
-            ?? lookupByICAOCode(icaoType) // fallback al codice API se il corretto non è nel DB
+            ?? lookupByICAOCode(icaoType) // fallback to API code if corrected one not in DB
 
         let mfr = manufacturer.isEmpty ? (icaoInfo?.manufacturer ?? "") : manufacturer
 
@@ -136,13 +136,13 @@ actor AircraftLookupService {
 
     // MARK: - Private
 
-    /// Parsa "A320-271N" → ("A320", "271N"), "A320 232" → ("A320", "232")
+    /// Parse "A320-271N" → ("A320", "271N"), "A320 232" → ("A320", "232")
     private func parseTypeField(_ typeField: String, icaoFallback: String) -> (model: String, variant: String) {
         guard !typeField.isEmpty else {
             return (icaoFallback, "")
         }
 
-        // Normalizza separatori: "A320-271N" → "A320 271N", "A320 232" resta uguale
+        // Normalize separators: "A320-271N" → "A320 271N", "A320 232" stays the same
         let normalized = typeField.replacingOccurrences(of: "-", with: " ")
         let parts = normalized.split(separator: " ").map(String.init)
 
@@ -156,8 +156,8 @@ actor AircraftLookupService {
         return (model, variant)
     }
 
-    /// Corregge il codice ICAO quando l'API restituisce il codice generico.
-    /// Usa la variant per distinguere CEO vs NEO e altre sotto-famiglie.
+    /// Corrects the ICAO code when the API returns the generic code.
+    /// Uses the variant to distinguish CEO vs NEO and other sub-families.
     private func correctICAOCode(apiCode: String, variant: String, model: String) -> String {
         let v = variant.uppercased()
         let isNeo = v.hasSuffix("N")  // 271N, 251N, 232N → neo
